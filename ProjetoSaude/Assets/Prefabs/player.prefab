@@ -41,6 +41,7 @@ GameObject:
   m_Component:
   - component: {fileID: 774202248420619381}
   - component: {fileID: 4069521621417517981}
+  - component: {fileID: 7284227898726807890}
   - component: {fileID: -5584014464882465850}
   - component: {fileID: 632130367012484437}
   - component: {fileID: 1752886194889736126}
@@ -122,6 +123,19 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &7284227898726807890
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6940387116798690195}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f050039f7a3223f4f92ba2aa123e8e5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _Lives: 3
 --- !u!114 &-5584014464882465850
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -139,6 +153,7 @@ MonoBehaviour:
   Flags: 262145
   NestedObjects: []
   NetworkedBehaviours:
+  - {fileID: 7284227898726807890}
   - {fileID: 632130367012484437}
   - {fileID: 1752886194889736126}
   - {fileID: 6684653420754839684}
@@ -174,6 +189,7 @@ MonoBehaviour:
   projectilePrefab: {fileID: 1921527331684374514, guid: b0b2ce2eb3f84da49a5cb5c1f306d314, type: 3}
   firePoint: {fileID: 1025070418501730991}
   projectileSpeed: 10
+  _score: 0
 --- !u!50 &-7952220556417301731
 Rigidbody2D:
   serializedVersion: 4

@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: -2123328415657821442}
   - component: {fileID: -8840563878073475872}
   - component: {fileID: 3872772870345363550}
-  - component: {fileID: 8310095302730655315}
   - component: {fileID: 1445280192451946231}
   m_Layer: 7
   m_Name: Enemy
@@ -167,20 +166,6 @@ MonoBehaviour:
   SyncParent: 0
   _autoAOIOverride: 1
   DisableSharedModeInterpolation: 0
---- !u!114 &8310095302730655315
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1392652864376512238}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cc2e98cada6f4654cb9f5f9e1d825d99, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  despawnTime: 2
-  horizontalSpeed: 10
 --- !u!114 &1445280192451946231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -199,4 +184,3 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 3872772870345363550}
-  - {fileID: 8310095302730655315}
