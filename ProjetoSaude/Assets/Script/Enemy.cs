@@ -9,7 +9,7 @@ using static Unity.Collections.Unicode;
 
 public class Enemy : NetworkBehaviour
 {
-    [Networked] private bool IsCollidingWithWall { get; set; }
+   /* [Networked] private bool IsCollidingWithWall { get; set; }
     [Networked] private bool IsAlive { get; set; } = true; // Propriedade para controlar se o inimigo está vivo
 
     [SerializeField] private float despawnTime = 5.0f; // Tempo antes de despawn (em segundos)
@@ -99,5 +99,5 @@ public class Enemy : NetworkBehaviour
 
         // Alternativamente, se preferir destruir o objeto
         // Runner.Despawn(Object);
-    }
+    }*/
 }

@@ -8,6 +8,14 @@ using UnityEngine;
 
 public class PlayerCollisionHandler : NetworkBehaviour
 {
+
+    private PlayerDataNetworked _playerData;
+
+    private void Start()
+    {
+        // Encontra o componente PlayerDataNetworked no objeto do jogador
+        _playerData = GetComponent<PlayerDataNetworked>();
+    }
     private void OnTriggerEnter2D(Collider2D other)
     {
         // Verifica se a colisão foi com um inimigo
@@ -22,32 +30,32 @@ public class PlayerCollisionHandler : NetworkBehaviour
                 // Se for o Host, lida com a colisão diretamente
                 if (Object.HasStateAuthority)
                 {
-                    HandleCollision(enemyNetworkObject);
+                    HandleCollision();
                 }
                 else
                 {
                     // Se for um cliente, envia um RPC para o Host
-                    RPC_HandleCollision(enemyNetworkObject);
+                    RPC_HandleCollision();
                 }
             }
         }
     }
 
     // Método local para lidar com a colisão no Host
-    private void HandleCollision(NetworkObject enemyNetworkObject)
+    private void HandleCollision()
     {
-        Debug.Log($"Colisão detectada entre o Player e o Enemy: {enemyNetworkObject.name} pelo Host.");
+       
 
-        // Implementar lógica adicional aqui, como reduzir a vida, aplicar dano, etc.
+        // Se o jogador tem um PlayerDataNetworked, subtrai uma vida
+        if (_playerData != null)
+        {
+            _playerData.SubtractLife();
+        }
     }
 
-    // RPC enviado por um cliente e processado pelo Host
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    private void RPC_HandleCollision(NetworkObject enemyNetworkObject)
+    private void RPC_HandleCollision()
     {
-        Debug.Log($"Colisão detectada entre o Player e o Enemy: {enemyNetworkObject.name} por um Cliente.");
-
-        // Lógica de colisão é executada no Host
-        HandleCollision(enemyNetworkObject);
+        HandleCollision();
     }
 }

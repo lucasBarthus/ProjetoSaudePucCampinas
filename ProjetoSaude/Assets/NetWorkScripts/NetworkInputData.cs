@@ -8,4 +8,5 @@ using Fusion;
 public struct NetworkInputData : INetworkInput
 {
     public Vector2 direction; // Usa Vector2 para movimento em 2D
+    public bool fire;
 }

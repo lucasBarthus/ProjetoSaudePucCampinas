@@ -266,6 +266,9 @@ public class FusionManager : MonoBehaviour, INetworkRunnerCallbacks
         if (Input.GetKey(KeyCode.D))
             data.direction += Vector2.right;
 
+        // Coleta de entrada para disparo
+        data.fire = Input.GetKey(KeyCode.Space);
+
         input.Set(data);
     }
 
@@ -356,7 +359,7 @@ public class FusionManager : MonoBehaviour, INetworkRunnerCallbacks
 
         if (runnerInstance.IsCloudReady)
         {
-            Debug.Log("NetworkRunner está pronto para a nuvem.");
+            
 
             // Ativa o GameObject "botaoCriacao" se estiver atribuído
             if (botaoCriacao != null)
@@ -365,7 +368,7 @@ public class FusionManager : MonoBehaviour, INetworkRunnerCallbacks
             }
             else
             {
-                Debug.LogWarning("O GameObject 'botaoCriacao' não foi atribuído no inspetor.");
+              
             }
         }
         else

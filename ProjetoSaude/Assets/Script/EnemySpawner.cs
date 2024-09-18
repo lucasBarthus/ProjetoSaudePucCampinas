@@ -3,10 +3,12 @@ using static Unity.Collections.Unicode;
 using UnityEngine;
 
 using System.Collections;
+using UnityEngine.UI;
 
 
 public class EnemySpawner : NetworkBehaviour
 {
+
     public NetworkObject enemyPrefab;
     public NetworkObjectPoolDefault objectPool; // Referência à pool de objetos
     public float spawnInterval; // Intervalo de tempo entre cada spawn
@@ -16,22 +18,22 @@ public class EnemySpawner : NetworkBehaviour
     public float maxY = 25f; // Limite máximo no eixo Y para a posição do spawn
 
     private float timer; // Contador de tempo para controlar os spawns
-
+    public GameObject readyButton;
     private void Start()
     {
-        StartCoroutine(StartSpawningWithDelay(5f)); // Inicia a rotina com um atraso de 5 segundos
-    }
-
-    private IEnumerator StartSpawningWithDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay); // Aguarda o tempo especificado
-        spawnInterval = UnityEngine.Random.Range(1f, 5f); // Define o intervalo de spawn após o atraso
+        gameObject.SetActive(false); // Desativa o spawner inicialmente
+        
     }
 
     private void Update()
     {
-        if (Runner.IsServer)
+        if (Object.HasStateAuthority)
         {
+            if (!gameObject.activeInHierarchy)
+            {
+                return; // Não faz nada se o spawner estiver desativado
+            }
+
             timer += Time.deltaTime;
 
             if (timer >= spawnInterval)
@@ -50,14 +52,30 @@ public class EnemySpawner : NetworkBehaviour
         // Obtenha o inimigo da pool
         NetworkObject enemyObject = objectPool.GetObjectFromPool(enemyPrefab);
 
-        // Defina a posição e rotação do inimigo antes de spawná-lo na rede
-        enemyObject.transform.position = spawnPosition;
-        enemyObject.transform.rotation = Quaternion.identity;
+        // Verifica se conseguiu obter o objeto da pool antes de fazer o spawn
+        if (enemyObject != null)
+        {
+            // Defina a posição e rotação do inimigo antes de spawná-lo na rede
+            enemyObject.transform.position = spawnPosition;
+            enemyObject.transform.rotation = Quaternion.identity;
 
-        // Faça o spawn do inimigo na rede
-        Runner.Spawn(enemyObject, spawnPosition, Quaternion.identity, Object.InputAuthority);
+            // Faça o spawn do inimigo na rede apenas pelo Host
+            Runner.Spawn(enemyObject, spawnPosition, Quaternion.identity, Object.InputAuthority);
 
-        // Atualize o intervalo de spawn
-        spawnInterval = UnityEngine.Random.Range(0.1f, 1f);
+            // Atualize o intervalo de spawn
+            spawnInterval = UnityEngine.Random.Range(0.1f, 1f);
+        }
+        else
+        {
+            Debug.LogWarning("Não foi possível obter um objeto da pool.");
+        }
     }
+    public void ActivateSpawner()
+    {
+        // Ative o spawner aqui. 
+        // Por exemplo, você pode ativar um GameObject ou habilitar um componente.
+        gameObject.SetActive(true); // Exemplo de ativação
+        Debug.Log("EnemySpawner ativado.");
+    }
+
 }
