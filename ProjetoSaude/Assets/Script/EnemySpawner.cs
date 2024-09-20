@@ -21,7 +21,7 @@ public class EnemySpawner : NetworkBehaviour
     public GameObject readyButton;
     private void Start()
     {
-        gameObject.SetActive(false); // Desativa o spawner inicialmente
+        readyButton.gameObject.SetActive(false); // Desativa o spawner inicialmente
         
     }
 

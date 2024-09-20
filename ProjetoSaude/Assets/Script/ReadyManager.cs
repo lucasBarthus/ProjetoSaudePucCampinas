@@ -5,6 +5,7 @@ using Fusion;
 using TMPro;
 using System.Linq;
 using UnityEngine.UI;
+using Unity.VisualScripting;
 
 
 public class ReadyManager : NetworkBehaviour
@@ -13,9 +14,11 @@ public class ReadyManager : NetworkBehaviour
     public Button readyButton;
     [SerializeField] private TextMeshProUGUI playerListText;
 
-    public GameObject spawner;
+    [SerializeField] public EnemySpawner enemySpawner;
     private void Start()
     {
+        
+       
         runner = FusionManager.runnerInstance;
         if (runner == null)
         {
@@ -23,6 +26,7 @@ public class ReadyManager : NetworkBehaviour
             return;
         }
     }
+   
 
     private void Update()
     {
@@ -67,8 +71,14 @@ public class ReadyManager : NetworkBehaviour
 
     public void OnClickReadyButton()
     {
-       spawner.SetActive(true);
+
+        enemySpawner.enabled = true;
     }
+
+
+
+
+
     private void UpdatePlayerList()
     {
         var activePlayers = runner.ActivePlayers;
