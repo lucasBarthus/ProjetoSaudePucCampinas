@@ -8,7 +8,6 @@ using UnityEngine.UI;
 
 public class EnemySpawner : NetworkBehaviour
 {
-
     public NetworkObject enemyPrefab;
     public NetworkObjectPoolDefault objectPool; // Referência à pool de objetos
     public float spawnInterval; // Intervalo de tempo entre cada spawn
@@ -19,21 +18,11 @@ public class EnemySpawner : NetworkBehaviour
 
     private float timer; // Contador de tempo para controlar os spawns
     public GameObject readyButton;
-    private void Start()
-    {
-        readyButton.gameObject.SetActive(false); // Desativa o spawner inicialmente
-        
-    }
 
     private void Update()
     {
-        if (Object.HasStateAuthority)
+        if (Object.HasStateAuthority && gameObject.activeInHierarchy)
         {
-            if (!gameObject.activeInHierarchy)
-            {
-                return; // Não faz nada se o spawner estiver desativado
-            }
-
             timer += Time.deltaTime;
 
             if (timer >= spawnInterval)
@@ -46,23 +35,19 @@ public class EnemySpawner : NetworkBehaviour
 
     private void SpawnEnemy()
     {
-        Vector3 spawnPosition = new Vector3(UnityEngine.Random.Range(minX, maxX), UnityEngine.Random.Range(minY, maxY), 0);
-        spawnPosition += transform.position;
+        Vector3 spawnPosition = new Vector3(
+            UnityEngine.Random.Range(minX, maxX),
+            UnityEngine.Random.Range(minY, maxY),
+            0) + transform.position;
 
-        // Obtenha o inimigo da pool
         NetworkObject enemyObject = objectPool.GetObjectFromPool(enemyPrefab);
 
-        // Verifica se conseguiu obter o objeto da pool antes de fazer o spawn
         if (enemyObject != null)
         {
-            // Defina a posição e rotação do inimigo antes de spawná-lo na rede
             enemyObject.transform.position = spawnPosition;
             enemyObject.transform.rotation = Quaternion.identity;
 
-            // Faça o spawn do inimigo na rede apenas pelo Host
             Runner.Spawn(enemyObject, spawnPosition, Quaternion.identity, Object.InputAuthority);
-
-            // Atualize o intervalo de spawn
             spawnInterval = UnityEngine.Random.Range(0.1f, 1f);
         }
         else
@@ -70,12 +55,11 @@ public class EnemySpawner : NetworkBehaviour
             Debug.LogWarning("Não foi possível obter um objeto da pool.");
         }
     }
+
     public void ActivateSpawner()
     {
-        // Ative o spawner aqui. 
-        // Por exemplo, você pode ativar um GameObject ou habilitar um componente.
-        gameObject.SetActive(true); // Exemplo de ativação
+        gameObject.SetActive(true);
         Debug.Log("EnemySpawner ativado.");
+        readyButton.SetActive(false); // Desativa o botão
     }
-
 }

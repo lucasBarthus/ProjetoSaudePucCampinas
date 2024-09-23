@@ -12,6 +12,7 @@ public class ReadyManager : NetworkBehaviour
 {
     private NetworkRunner runner;
     public Button readyButton;
+    public bool gameIsReady = false;
     [SerializeField] private TextMeshProUGUI playerListText;
 
     [SerializeField] public EnemySpawner enemySpawner;
@@ -56,7 +57,7 @@ public class ReadyManager : NetworkBehaviour
             Debug.LogError("Tipo de ActivePlayers não suportado para contagem.");
         }
 
-        if (playerCount >= 2)
+        if (playerCount >= 2 && gameIsReady == false)
         {
             readyButton.gameObject.SetActive(true);
         }
@@ -73,6 +74,8 @@ public class ReadyManager : NetworkBehaviour
     {
 
         enemySpawner.enabled = true;
+        gameIsReady = true;
+        readyButton.gameObject.SetActive(false);
     }
 
 

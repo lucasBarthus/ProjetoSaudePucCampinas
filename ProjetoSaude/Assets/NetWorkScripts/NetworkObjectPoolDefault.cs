@@ -51,6 +51,7 @@ public class NetworkObjectPoolDefault : NetworkObjectProviderDefault
         }
         else
         {
+            // Apenas destrua se não estiver em uma pool
             Destroy(instance.gameObject);
             Debug.Log($"Objeto destruído: {instance.name}");
         }

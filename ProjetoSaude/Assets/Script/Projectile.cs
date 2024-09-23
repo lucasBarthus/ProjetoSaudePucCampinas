@@ -23,11 +23,7 @@ public class Projectile : NetworkBehaviour
             {
                 owner.OnEnemyHit(pointsForKill);
             }
-            // Destrói o inimigo
-            Runner.Despawn(collision.GetComponent<NetworkObject>());
-
-            // Destrói o projétil
-            Runner.Despawn(Object);
+          
         }
     }
 
