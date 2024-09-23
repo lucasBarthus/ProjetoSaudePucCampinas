@@ -16,18 +16,19 @@ public class ReadyManager : NetworkBehaviour
     [SerializeField] private TextMeshProUGUI playerListText;
 
     [SerializeField] public EnemySpawner enemySpawner;
+
     private void Start()
     {
-        
-       
         runner = FusionManager.runnerInstance;
         if (runner == null)
         {
             Debug.LogError("NetworkRunner não está inicializado.");
             return;
         }
+
+        // Configura o botão para chamar o OnClickReadyButton quando clicado
+        readyButton.onClick.AddListener(OnClickReadyButton);
     }
-   
 
     private void Update()
     {
@@ -57,31 +58,27 @@ public class ReadyManager : NetworkBehaviour
             Debug.LogError("Tipo de ActivePlayers não suportado para contagem.");
         }
 
-        if (playerCount >= 2 && gameIsReady == false)
-        {
-            readyButton.gameObject.SetActive(true);
-        }
-        else
-        {
-
-            readyButton.gameObject.SetActive(false);
-        }
-
-
+        // Exibe o botão "Ready" se houver pelo menos 2 jogadores e o jogo não estiver pronto
+        readyButton.gameObject.SetActive(playerCount >= 2 && !gameIsReady);
     }
-
     public void OnClickReadyButton()
     {
-
-        enemySpawner.enabled = true;
-        gameIsReady = true;
-        readyButton.gameObject.SetActive(false);
+        Debug.Log("Botão Ready clicado");
+        RPC_GameReady();
     }
 
-
-
-
-
+    // Função RPC para sincronizar o estado entre os jogadores
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RPC_GameReady()
+    {
+        if (!gameIsReady)
+        {
+            Debug.Log("o jogo começou");
+            gameIsReady = true;
+            enemySpawner.enabled = true;
+            readyButton.gameObject.SetActive(false);  // Oculta o botão para todos
+        }
+    }
     private void UpdatePlayerList()
     {
         var activePlayers = runner.ActivePlayers;
@@ -91,8 +88,7 @@ public class ReadyManager : NetworkBehaviour
 
         foreach (var player in activePlayers)
         {
-           
-            playerNames.Add(player.ToString()); 
+            playerNames.Add(player.ToString());
         }
 
         // Atualiza o texto com a lista de jogadores

@@ -7,6 +7,13 @@ public class EnemyCollision : NetworkBehaviour
 {
     [SerializeField] private int vida = 1; // Vida inicial do inimigo
 
+    public NetworkObject NetworkObject { get; private set; }
+
+    private void Awake()
+    {
+        NetworkObject = GetComponent<NetworkObject>();  
+    }
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Bullet"))
@@ -16,20 +23,20 @@ public class EnemyCollision : NetworkBehaviour
                 RPC_EnemyHit("Bullet");
             }
 
+            // Despawns o projétil se o cliente tiver autoridade
             if (collision.TryGetComponent<NetworkObject>(out var networkObject))
             {
                 if (networkObject.HasStateAuthority)
                 {
-                    Runner.Despawn(networkObject); // Despawns o projétil
+                    Runner.Despawn(NetworkObject);
                 }
             }
         }
-
-        if (collision.CompareTag("Wall"))
+        else if (collision.CompareTag("Wall"))
         {
             if (Object.HasStateAuthority)
             {
-                RPC_EnemyHit("Wall");
+                Runner.Despawn(NetworkObject);
             }
         }
     }
@@ -37,18 +44,24 @@ public class EnemyCollision : NetworkBehaviour
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RPC_EnemyHit(string source)
     {
-        vida--;
+        vida--; // Reduz a vida do inimigo
         Debug.Log($"O inimigo foi atingido por {source}! Vida restante: {vida}");
 
         if (vida < 1)
         {
             if (TryGetComponent<NetworkObject>(out var networkObject))
             {
-                // Retorna o inimigo à pool
                 if (networkObject.HasStateAuthority)
                 {
                     var enemySpawner = FindObjectOfType<EnemySpawner>();
-                    enemySpawner.objectPool.ReleaseInstance(Runner, networkObject); // Retorne à pool
+                    if (enemySpawner != null)
+                    {
+                        enemySpawner.RpcDestroyEnemy(networkObject); // Chama o RPC para destruir o inimigo
+                    }
+                    else
+                    {
+                        Debug.LogWarning("EnemySpawner não encontrado.");
+                    }
                 }
             }
 

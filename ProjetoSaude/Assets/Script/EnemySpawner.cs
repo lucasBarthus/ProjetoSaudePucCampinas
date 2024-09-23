@@ -5,11 +5,9 @@ using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 
-
 public class EnemySpawner : NetworkBehaviour
 {
     public NetworkObject enemyPrefab;
-    public NetworkObjectPoolDefault objectPool; // Referência à pool de objetos
     public float spawnInterval; // Intervalo de tempo entre cada spawn
     public float minX = -12f; // Limite mínimo no eixo X para a posição do spawn
     public float maxX = 12f; // Limite máximo no eixo X para a posição do spawn
@@ -35,24 +33,35 @@ public class EnemySpawner : NetworkBehaviour
 
     private void SpawnEnemy()
     {
+        // Gera uma posição aleatória dentro dos limites definidos
         Vector3 spawnPosition = new Vector3(
             UnityEngine.Random.Range(minX, maxX),
             UnityEngine.Random.Range(minY, maxY),
-            0) + transform.position;
+            0
+        );
 
-        NetworkObject enemyObject = objectPool.GetObjectFromPool(enemyPrefab);
+        // Ajusta a posição com a posição do spawner
+        spawnPosition += transform.position;
 
-        if (enemyObject != null)
+        // Spawna o inimigo usando o `Runner`
+        if (enemyPrefab != null)
         {
-            enemyObject.transform.position = spawnPosition;
-            enemyObject.transform.rotation = Quaternion.identity;
-
-            Runner.Spawn(enemyObject, spawnPosition, Quaternion.identity, Object.InputAuthority);
-            spawnInterval = UnityEngine.Random.Range(0.1f, 1f);
+            NetworkObject enemyObject = Runner.Spawn(enemyPrefab, spawnPosition, Quaternion.identity, Object.InputAuthority);
+            spawnInterval = UnityEngine.Random.Range(0.1f, 1f); // Varia o intervalo entre spawns
         }
         else
         {
-            Debug.LogWarning("Não foi possível obter um objeto da pool.");
+            Debug.LogWarning("O prefab do inimigo não está definido.");
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RpcDestroyEnemy(NetworkObject enemy)
+    {
+        if (enemy != null)
+        {
+            Runner.Despawn(enemy); // Despawns o inimigo
+            Debug.Log($"Inimigo destruído: {enemy}");
         }
     }
 
@@ -61,5 +70,17 @@ public class EnemySpawner : NetworkBehaviour
         gameObject.SetActive(true);
         Debug.Log("EnemySpawner ativado.");
         readyButton.SetActive(false); // Desativa o botão
+    }
+
+    // Método para desenhar gizmos no editor
+    private void OnDrawGizmos()
+    {
+        // Definindo a cor dos gizmos
+        Gizmos.color = Color.red;
+
+        // Desenhando uma caixa que representa a área de spawn
+        Vector3 center = transform.position + new Vector3((minX + maxX) / 2, (minY + maxY) / 2, 0);
+        Vector3 size = new Vector3(maxX - minX, maxY - minY, 1);
+        Gizmos.DrawWireCube(center, size);
     }
 }
