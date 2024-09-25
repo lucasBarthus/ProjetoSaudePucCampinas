@@ -8,12 +8,11 @@ public class PlayerMovementFusion : NetworkBehaviour
 {
 
     private Rigidbody2D _rb; // Referência ao Rigidbody2D para movimento 2D
-
     public float moveSpeed = 15f; // Velocidade de movimento
     [SerializeField] private GameObject projectilePrefab;  // Prefab do projétil
     [SerializeField] private Transform firePoint;          // Ponto de disparo do projétil
     [SerializeField] private float projectileSpeed = 20f;  // Velocidade do projétil
-    [SerializeField] private float fireCooldown = 0.2f;     // Cooldown entre disparos
+    [SerializeField] private float fireCooldown = 0.2f;    // Cooldown entre disparos
 
     [Networked] public int score { get; set; } // Pontuação do jogador
 
@@ -21,8 +20,6 @@ public class PlayerMovementFusion : NetworkBehaviour
 
     public override void Spawned()
     {
-        // --- Host & Client
-        // Set the local runtime references.
         _rb = GetComponent<Rigidbody2D>();
     }
 
@@ -45,7 +42,7 @@ public class PlayerMovementFusion : NetworkBehaviour
         }
     }
 
-    [Rpc]
+    [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
     private void FireProjectileRPC()
     {
         // Verifica se o Runner pode spawnar objetos
@@ -54,8 +51,8 @@ public class PlayerMovementFusion : NetworkBehaviour
         // Converte a rotação do firePoint para um Quaternion
         Quaternion spawnRotation = Quaternion.Euler(0, 0, firePoint.eulerAngles.z);
 
-        // Instancia o projétil na posição e rotação do firePoint
-        NetworkObject projectile = Runner.Spawn(projectilePrefab, _rb.position, spawnRotation, Object.InputAuthority);
+        // Instancia o projétil na posição do firePoint e com a rotação
+        NetworkObject projectile = Runner.Spawn(projectilePrefab, firePoint.position, spawnRotation, Object.InputAuthority);
 
         // Aplica a velocidade ao projétil
         Rigidbody2D rb = projectile.GetComponent<Rigidbody2D>();
@@ -68,7 +65,7 @@ public class PlayerMovementFusion : NetworkBehaviour
         Projectile projectileScript = projectile.GetComponent<Projectile>();
         if (projectileScript != null)
         {
-            projectileScript.SetOwner(this);
+            projectileScript.SetOwner(this); // Associa o dono (jogador) ao projétil
         }
     }
 
@@ -88,6 +85,16 @@ public class PlayerMovementFusion : NetworkBehaviour
 
             // Move o jogador aplicando força ao Rigidbody2D
             _rb.velocity = data.direction * moveSpeed;
+        }
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    public void RpcDestroyBullet(NetworkObject bullet)
+    {
+        if (bullet != null )
+        {
+            Runner.Despawn(bullet); // Destrói a bala na rede
+            Debug.Log($"Bala destruída: {bullet}");
         }
     }
 }

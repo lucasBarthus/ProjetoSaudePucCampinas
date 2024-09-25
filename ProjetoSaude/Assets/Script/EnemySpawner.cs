@@ -17,6 +17,8 @@ public class EnemySpawner : NetworkBehaviour
     private float timer; // Contador de tempo para controlar os spawns
     public GameObject readyButton;
 
+
+
     private void Update()
     {
         if (Object.HasStateAuthority && gameObject.activeInHierarchy)

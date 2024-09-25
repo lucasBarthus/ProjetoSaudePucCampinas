@@ -6,18 +6,33 @@ using TMPro;
 
 public class PlayerPoints : MonoBehaviour
 {
-    private TextMeshPro PlayerPointText;
+    public TextMeshProUGUI PlayerPointText;
     private PlayerMovementFusion player;
+    private int playerPoints; // Variável para armazenar a pontuação do jogador
 
     private void Start()
     {
-        PlayerPointText = GameObject.Find("PointsText").GetComponent<TextMeshPro>();
-
+        PlayerPointText = GameObject.Find("PointsText").GetComponent<TextMeshProUGUI>();
+        playerPoints = 0; // Inicializa a pontuação do jogador
+        UpdatePointsText(); // Atualiza o texto no início
     }
 
-    private void Update()
+    // Método para adicionar pontos
+    public void AddPoints(int points)
     {
+        playerPoints += points; // Adiciona os pontos
+        UpdatePointsText(); // Atualiza o texto
+    }
 
-        //PlayerPointText.text += 
+    // Método para atualizar o texto
+    private void UpdatePointsText()
+    {
+        PlayerPointText.text = "Pontos: " + playerPoints; // Atualiza o texto com a pontuação
+    }
+
+    // (Opcional) Se você quiser definir o jogador para receber pontos
+    public void SetPlayer(PlayerMovementFusion newPlayer)
+    {
+        player = newPlayer;
     }
 }

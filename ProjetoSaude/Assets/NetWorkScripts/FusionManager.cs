@@ -52,6 +52,7 @@ public class FusionManager : MonoBehaviour, INetworkRunnerCallbacks
         {
             Scene = SceneRef.FromIndex(GetSceneIndex(lobbyGameSceneName)),
             SessionName = randomSessionName,
+            PlayerCount = 2,
             GameMode = GameMode.Host // O servidor (host) deve criar a sessão e instanciar o PlayerPrefab
         });
     }

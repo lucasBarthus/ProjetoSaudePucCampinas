@@ -5,15 +5,27 @@ using UnityEngine;
 
 public class EnemyCollision : NetworkBehaviour
 {
-    [SerializeField] private int vida = 1; // Vida inicial do inimigo
+    [SerializeField] private int vida; // Vida inicial do inimigo
+    public float speed = 50f;
 
     public NetworkObject NetworkObject { get; private set; }
 
     private void Awake()
     {
-        NetworkObject = GetComponent<NetworkObject>();  
+        NetworkObject = GetComponent<NetworkObject>();
     }
+    public override void FixedUpdateNetwork()
+    {
+        MoveDown();
+    }
+  
+    private void MoveDown()
+    {
+        // Move o inimigo para baixo usando Translate
+        transform.Translate(Vector3.down * speed * Time.deltaTime);
 
+        
+    }
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Bullet"))
@@ -22,15 +34,7 @@ public class EnemyCollision : NetworkBehaviour
             {
                 RPC_EnemyHit("Bullet");
             }
-
-            // Despawns o projétil se o cliente tiver autoridade
-            if (collision.TryGetComponent<NetworkObject>(out var networkObject))
-            {
-                if (networkObject.HasStateAuthority)
-                {
-                    Runner.Despawn(NetworkObject);
-                }
-            }
+          
         }
         else if (collision.CompareTag("Wall"))
         {
