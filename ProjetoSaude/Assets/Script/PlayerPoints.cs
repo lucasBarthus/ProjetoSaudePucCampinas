@@ -12,7 +12,7 @@ public class PlayerPoints : MonoBehaviour
 
     private void Start()
     {
-        PlayerPointText = GameObject.Find("PointsText").GetComponent<TextMeshProUGUI>();
+       // PlayerPointText = GameObject.Find("PointsText").GetComponent<TextMeshProUGUI>();
         playerPoints = 0; // Inicializa a pontuação do jogador
         UpdatePointsText(); // Atualiza o texto no início
     }

@@ -13,12 +13,17 @@ public class EnemySpawner : NetworkBehaviour
     public float maxX = 12f; // Limite máximo no eixo X para a posição do spawn
     public float minY = 20f; // Limite mínimo no eixo Y para a posição do spawn
     public float maxY = 25f; // Limite máximo no eixo Y para a posição do spawn
-
+    public GameObject boss; // Referência ao GameObject do Boss
+    public float BossAparece;
     private float timer; // Contador de tempo para controlar os spawns
     public GameObject readyButton;
+    private bool bossActivated = false;
 
 
-
+    public void Start()
+    {
+        StartCoroutine(ActivateBossAfterDelay(BossAparece));
+    }
     private void Update()
     {
         if (Object.HasStateAuthority && gameObject.activeInHierarchy)
@@ -72,6 +77,25 @@ public class EnemySpawner : NetworkBehaviour
         gameObject.SetActive(true);
         Debug.Log("EnemySpawner ativado.");
         readyButton.SetActive(false); // Desativa o botão
+
+        // Iniciar contagem regressiva para ativar o boss após 1m30s
+      
+    }
+
+    private IEnumerator ActivateBossAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        if (boss != null && !bossActivated)
+        {
+            boss.SetActive(true);
+            bossActivated = true; // Para garantir que o boss só seja ativado uma vez
+            Debug.Log("Boss ativado!");
+        }
+        else
+        {
+            Debug.LogWarning("O Boss não foi atribuído ou já foi ativado.");
+        }
     }
 
     // Método para desenhar gizmos no editor

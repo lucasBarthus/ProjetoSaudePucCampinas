@@ -7,6 +7,7 @@ using System.Globalization;
 public class PlayerMovementFusion : NetworkBehaviour
 {
 
+
     private Rigidbody2D _rb; // Referência ao Rigidbody2D para movimento 2D
     public float moveSpeed = 15f; // Velocidade de movimento
     [SerializeField] private GameObject projectilePrefab;  // Prefab do projétil
@@ -88,10 +89,12 @@ public class PlayerMovementFusion : NetworkBehaviour
         }
     }
 
-    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    // Método para destruir a bala na rede, chamado apenas pelo StateAuthority
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RpcDestroyBullet(NetworkObject bullet)
     {
-        if (bullet != null )
+        // Verifica se o bullet é válido e o servidor tem a autoridade para destruí-lo
+        if (bullet != null && Object.HasStateAuthority)
         {
             Runner.Despawn(bullet); // Destrói a bala na rede
             Debug.Log($"Bala destruída: {bullet}");

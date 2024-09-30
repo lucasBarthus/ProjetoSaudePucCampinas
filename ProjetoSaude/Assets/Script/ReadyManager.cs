@@ -6,6 +6,7 @@ using TMPro;
 using System.Linq;
 using UnityEngine.UI;
 using Unity.VisualScripting;
+using UnityEngine.SceneManagement;
 
 
 public class ReadyManager : NetworkBehaviour
@@ -13,12 +14,18 @@ public class ReadyManager : NetworkBehaviour
     private NetworkRunner runner;
     public Button readyButton;
     public bool gameIsReady = false;
+    public GameObject gameOverScreen;
+    public static ReadyManager Instance { get; private set; }
+    int deadCount = 0;
+
     [SerializeField] private TextMeshProUGUI playerListText;
 
     [SerializeField] public EnemySpawner enemySpawner;
 
     private void Start()
     {
+        Instance = this;
+
         runner = FusionManager.runnerInstance;
         if (runner == null)
         {
@@ -32,8 +39,15 @@ public class ReadyManager : NetworkBehaviour
 
     private void Update()
     {
+        // Se ambos os jogadores estiverem mortos, exiba a tela de Game Over
+        if (deadCount >= 2)
+        {
+            ShowGameOverScreen();
+        }
+
         if (runner != null)
         {
+            //tirar essas duas funções do update futuramente 
             CheckPlayerCount();
             UpdatePlayerList();
         }
@@ -77,6 +91,9 @@ public class ReadyManager : NetworkBehaviour
             gameIsReady = true;
             enemySpawner.enabled = true;
             readyButton.gameObject.SetActive(false);  // Oculta o botão para todos
+            runner.SessionInfo.IsOpen = false;
+            Debug.Log("Sala fechada. Ninguém mais pode entrar.");
+            
         }
     }
     private void UpdatePlayerList()
@@ -93,5 +110,28 @@ public class ReadyManager : NetworkBehaviour
 
         // Atualiza o texto com a lista de jogadores
         playerListText.text = "Jogadores:\n" + string.Join("\n", playerNames);
+    }
+
+   public void CheckPlayersDead()
+    {
+        deadCount++;
+    }
+
+    private void ShowGameOverScreen()
+    {
+        Time.timeScale = 0f;
+        gameOverScreen.SetActive(true);
+      
+        // Lógica para mostrar a tela de Game Over
+        Debug.Log("Ambos os jogadores estão mortos! Tela de Game Over!");
+    }
+
+    public void OnClickButtonExit()
+    {
+        // Reinicia o jogo recarregando a cena atual
+        Time.timeScale = 1f; // Certifique-se de restaurar o tempo normal
+      
+        Runner.Shutdown(); // Opcionalmente, encerra o Runner antes de reiniciar
+      
     }
 }

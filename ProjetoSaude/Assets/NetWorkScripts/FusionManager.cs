@@ -294,6 +294,7 @@ public class FusionManager : MonoBehaviour, INetworkRunnerCallbacks
         {
             runner.Despawn(networkObject);
             _spawnedCharacters.Remove(player);
+            
         }
     }
 
@@ -327,7 +328,7 @@ public class FusionManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
     {
-        // Handle shutdown if needed
+        SceneManager.LoadScene("MenuLobbyGame");
     }
 
     public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message)
@@ -335,25 +336,11 @@ public class FusionManager : MonoBehaviour, INetworkRunnerCallbacks
         // Handle user simulation messages if needed
     }
 
-    public enum SessionState
-    {
-        NoLobby,
-        InLobby,
-        Loading,
-        InSession
-    }
-
-    public SessionState CurrentSessionState { get; private set; }
-
-    private void SetSessionState(SessionState newState)
-    {
-        CurrentSessionState = newState;
-        // Realize ações baseadas no estado, se necessário.
-    }
+  
 
     void Update()
     {
-        if (sessionCreated)
+      /*  if (sessionCreated)
         {
             return; // Sai do método Update e não executa o restante do código
         }
@@ -375,7 +362,7 @@ public class FusionManager : MonoBehaviour, INetworkRunnerCallbacks
         else
         {
             Debug.LogWarning("NetworkRunner não está pronto para a nuvem.");
-        }
+        }*/
     }
 
 }
