@@ -2,17 +2,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Fusion;
+using UnityEngine.SocialPlatforms.Impl;
 
 public class PlayerDataNetworked : NetworkBehaviour
 {
-
+    
     private const int STARTING_LIVES = 3;
     private const float INVULNERABILITY_DURATION = 2f;
     private const float BLINK_INTERVAL = 0.2f;
     public bool IsDead { get; private set; } = false;
 
     [Networked]
-    public int Lives { get; private set; }
+    public int Lives { get;  set; }
 
     [Networked]
     private bool spriteVisible { get; set; } = true;
@@ -20,7 +21,6 @@ public class PlayerDataNetworked : NetworkBehaviour
     private bool isInvulnerable = false;
     private SpriteRenderer _spriteRenderer;
     private bool hasNotifiedReadyManager = false;
-    private bool notifiedReadyManager = false; // Variável para garantir que só notifique uma vez
 
     private void Start()
     {
@@ -46,6 +46,12 @@ public class PlayerDataNetworked : NetworkBehaviour
         {
             RPC_TakeDamage();
         }
+    }
+   
+    public void IncreaseLives(int amount)
+    {
+        Lives += amount; // Adiciona vidas
+        Debug.Log($"Vidas aumentadas: {Lives}");
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
@@ -96,6 +102,7 @@ public class PlayerDataNetworked : NetworkBehaviour
 
         Runner.Despawn(Object);
     }
+
     public override void FixedUpdateNetwork()
     {
         if (_spriteRenderer != null && _spriteRenderer.enabled != spriteVisible)
@@ -108,4 +115,5 @@ public class PlayerDataNetworked : NetworkBehaviour
     {
         ReadyManager.Instance.CheckPlayersDead();
     }
+   
 }

@@ -49,7 +49,7 @@ public class ReadyManager : NetworkBehaviour
         {
             //tirar essas duas funções do update futuramente 
             CheckPlayerCount();
-            UpdatePlayerList();
+            
         }
     }
 
@@ -96,21 +96,7 @@ public class ReadyManager : NetworkBehaviour
             
         }
     }
-    private void UpdatePlayerList()
-    {
-        var activePlayers = runner.ActivePlayers;
-
-        // Cria uma lista de nomes de jogadores
-        List<string> playerNames = new List<string>();
-
-        foreach (var player in activePlayers)
-        {
-            playerNames.Add(player.ToString());
-        }
-
-        // Atualiza o texto com a lista de jogadores
-        playerListText.text = "Jogadores:\n" + string.Join("\n", playerNames);
-    }
+   
 
    public void CheckPlayersDead()
     {

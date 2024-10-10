@@ -3,31 +3,38 @@ using System.Collections.Generic;
 using UnityEngine;
 using Fusion;
 using System.Globalization;
+using TMPro;
 
 public class PlayerMovementFusion : NetworkBehaviour
 {
 
+    public bool powerUpVelocity = false;
+    public bool powerUpFireRate = false;
 
-    private Rigidbody2D _rb; // Referência ao Rigidbody2D para movimento 2D
-    public float moveSpeed = 15f; // Velocidade de movimento
-    [SerializeField] private GameObject projectilePrefab;  // Prefab do projétil
-    [SerializeField] private Transform firePoint;          // Ponto de disparo do projétil
-    [SerializeField] private float projectileSpeed = 20f;  // Velocidade do projétil
-    [SerializeField] private float fireCooldown = 0.2f;    // Cooldown entre disparos
 
+    private Rigidbody2D _rb;
+    public float moveSpeed = 15f;
+    [SerializeField] private GameObject projectilePrefab;
+    [SerializeField] private Transform firePoint;
+    [SerializeField] private float projectileSpeed = 20f;
+    [SerializeField] private float fireCooldown = 0.2f;
+    private float fireCooldownInitial = 0.2f;
     [Networked] public int score { get; set; } // Pontuação do jogador
+    [SerializeField] private TextMeshProUGUI scoreText;
 
     private TickTimer _shootCooldown;
 
     public override void Spawned()
     {
+        UpdateScoreText();
         _rb = GetComponent<Rigidbody2D>();
+        _shootCooldown = TickTimer.CreateFromSeconds(Runner, fireCooldown); // Initialize cooldown in Spawned
     }
 
     private void Update()
     {
         // Apenas o jogador com autoridade pode disparar
-        if (HasInputAuthority && Input.GetKeyDown(KeyCode.Space))
+        if (HasInputAuthority && Input.GetKey(KeyCode.Space))
         {
             FireProjectile();
         }
@@ -38,8 +45,8 @@ public class PlayerMovementFusion : NetworkBehaviour
         // Verifica se o cooldown de disparo expirou
         if (_shootCooldown.ExpiredOrNotRunning(Runner))
         {
-            FireProjectileRPC(); // Chama o método de RPC para disparar o projétil
-            _shootCooldown = TickTimer.CreateFromSeconds(Runner, fireCooldown); // Atualiza o cooldown
+            FireProjectileRPC();
+            _shootCooldown = TickTimer.CreateFromSeconds(Runner, fireCooldown);
         }
     }
 
@@ -49,11 +56,8 @@ public class PlayerMovementFusion : NetworkBehaviour
         // Verifica se o Runner pode spawnar objetos
         if (!Runner.CanSpawn) return;
 
-        // Converte a rotação do firePoint para um Quaternion
-        Quaternion spawnRotation = Quaternion.Euler(0, 0, firePoint.eulerAngles.z);
-
-        // Instancia o projétil na posição do firePoint e com a rotação
-        NetworkObject projectile = Runner.Spawn(projectilePrefab, firePoint.position, spawnRotation, Object.InputAuthority);
+        // Instancia o projétil na posição do firePoint
+        NetworkObject projectile = Runner.Spawn(projectilePrefab, firePoint.position, firePoint.rotation, Object.InputAuthority);
 
         // Aplica a velocidade ao projétil
         Rigidbody2D rb = projectile.GetComponent<Rigidbody2D>();
@@ -66,16 +70,10 @@ public class PlayerMovementFusion : NetworkBehaviour
         Projectile projectileScript = projectile.GetComponent<Projectile>();
         if (projectileScript != null)
         {
-            projectileScript.SetOwner(this); // Associa o dono (jogador) ao projétil
+            projectileScript.SetOwner(this);
         }
     }
 
-    // Método chamado quando o projétil acerta um inimigo
-    public void OnEnemyHit(int points)
-    {
-        score += points; // Adiciona pontos à pontuação do jogador
-        Debug.Log($"Pontuação: {score}");
-    }
 
     public override void FixedUpdateNetwork()
     {
@@ -83,21 +81,108 @@ public class PlayerMovementFusion : NetworkBehaviour
         {
             // Normaliza a direção para evitar aceleração excessiva
             data.direction.Normalize();
-
-            // Move o jogador aplicando força ao Rigidbody2D
             _rb.velocity = data.direction * moveSpeed;
         }
     }
 
-    // Método para destruir a bala na rede, chamado apenas pelo StateAuthority
+    // Métodos para lidar com os Power-ups
+    public void AddLives(int amount)
+    {
+
+
+
+        var playerData = GetComponent<PlayerDataNetworked>();
+        var playerLives = playerData.Lives;
+        if (playerLives >= 3)
+        {
+
+
+            if (playerData != null)
+            {
+                playerData.Lives += amount; // Adiciona vidas
+
+            }
+
+        }
+        else
+        {
+            score += 100;
+            UpdateScoreText();
+        }
+    }
+
+    public void IncreaseFireRate(float amount, float duration)
+    {
+        fireCooldown = Mathf.Max(0.1f, fireCooldown - amount); // Aumenta a taxa de disparo, garantindo que não fique negativa
+        StartCoroutine(FireRateBoostTimer(amount, duration));
+        powerUpFireRate = true;
+     
+    }
+    public void DecreaseFireRate(float amount)
+    {
+        fireCooldown = fireCooldownInitial;
+        powerUpFireRate = false;
+      
+    }
+
+    public void IncreaseSpeed(float amount, float duration)
+    {
+        moveSpeed += amount; // Aumenta a velocidade
+        powerUpVelocity = true;
+
+       
+
+        // Inicia a corrotina para reverter a velocidade após o tempo do boost
+        StartCoroutine(SpeedBoostTimer(amount, duration));
+    }
+    public void DecreaseSpeed(float amount)
+    {
+        moveSpeed -= amount;
+        powerUpVelocity = false;
+       
+    }
+
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RpcDestroyBullet(NetworkObject bullet)
     {
-        // Verifica se o bullet é válido e o servidor tem a autoridade para destruí-lo
         if (bullet != null && Object.HasStateAuthority)
         {
-            Runner.Despawn(bullet); // Destrói a bala na rede
-            Debug.Log($"Bala destruída: {bullet}");
+            Runner.Despawn(bullet);
+          
+        }
+    }
+    private IEnumerator SpeedBoostTimer(float amount, float duration)
+    {
+        // Espera pelo tempo especificado (duração do boost)
+        yield return new WaitForSeconds(duration);
+
+        // Remove o boost de velocidade após o tempo definido
+        DecreaseSpeed(amount);
+       
+    }
+
+    private IEnumerator FireRateBoostTimer(float amount, float duration)
+    {
+        
+        yield return new WaitForSeconds(duration);
+
+
+        DecreaseFireRate(amount);
+     
+    }
+    public void OnEnemyHit(int points)
+    {
+        UpdateScoreText(); // atualiza o score
+        // Aumenta a pontuação do jogador
+        score += points;
+     
+    }
+
+    private void UpdateScoreText()
+    {
+        if (scoreText != null)
+        {
+            scoreText.text = "Score: " + score.ToString();
         }
     }
 }

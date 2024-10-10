@@ -78,7 +78,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_Sprite: {fileID: 21300000, guid: 131e4ffb6c5aaa94aa1a9be22b8a28b6, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -199,10 +199,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dcb8190d97c7b7a45a99e3380de09630, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  pointsForKill: 10
   vida: 1
   speed: 5
   hitColor: {r: 1, g: 0, b: 0, a: 1}
   flashDuration: 0.1
+  originalColor: {r: 0, g: 0, b: 0, a: 0}
+  explosionPrefab:
+    RawGuidValue: 49099e474028f7b4aa4f0aa6758a22d7
+  explosionColor: {r: 0.5803922, g: 0.7254902, b: 0.16078432, a: 1}
+  enemyType: 0
+  targetPlayer: {fileID: 0}
 --- !u!95 &9057276964368642171
 Animator:
   serializedVersion: 5

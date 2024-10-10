@@ -7,28 +7,50 @@ using UnityEditor;
 using UnityEngine;
 using static System.Collections.Specialized.BitVector32;
 using UnityEngine.SceneManagement;
+using System.Linq;
+using UnityEngine.UI;
+using static Unity.Collections.Unicode;
 
 public class FusionManager : MonoBehaviour, INetworkRunnerCallbacks
 {
-    public static bool sessionCreated = false;
 
-    [SerializeField] private NetworkPrefabRef _playerPrefab;
+    // Lista de personagens possíveis (prefabs)
+    [SerializeField] private List<NetworkPrefabRef> _availablePrefabs; // Lista de prefabs disponíveis
+    private NetworkPrefabRef _playerPrefab; // Prefab do jogador selecionado
+
     private Dictionary<PlayerRef, NetworkObject> _spawnedCharacters = new Dictionary<PlayerRef, NetworkObject>();
+    public static FusionManager Instance { get; private set; }
 
+    
+    public GameObject playerPrefab; // Prefab do jogador atual
+ 
+    public GameObject characterSelectCanvas;
+    [SerializeField] private Canvas LobbyCanvas;
+  
+    public static bool sessionCreated = false;
+  
+ 
     public static NetworkRunner runnerInstance;
     public string lobbyName = "Default";
+    public string GameScene = "GameScene"; // Nome da cena de jogo
+    public Button startGameButton; // O botão que será ativado quando ambos os jogadores estiverem prontos
+   
+    private Dictionary<PlayerRef, CharacterData> playerCharacterSelection = new Dictionary<PlayerRef, CharacterData>(); // Armazena a seleção de personagens
     public Transform sessionListContentParent;
     public GameObject sessionListEntryPrefab;
-    public Dictionary<string, GameObject> sessionListUiDictionary = new Dictionary<String, GameObject>();
-
+    public Dictionary<string, GameObject> sessionListUiDictionary = new Dictionary<string, GameObject>();
+    public Button readyButton; // Botão "Pronto"
+   
+    private string characterSelectSceneName = "CharacterSelect";
     private int reconnectAttempts = 0;
     private const int maxReconnectAttempts = 3;
-
-    public string lobbyGameSceneName;
     public GameObject botaoCriacao;
 
     private void Awake()
     {
+       
+        Instance = this;
+
         runnerInstance = gameObject.GetComponent<NetworkRunner>();
 
         if (runnerInstance == null)
@@ -39,7 +61,9 @@ public class FusionManager : MonoBehaviour, INetworkRunnerCallbacks
 
     private void Start()
     {
-         runnerInstance.JoinSessionLobby(SessionLobby.Shared, lobbyName);
+        
+    
+    runnerInstance.JoinSessionLobby(SessionLobby.Shared, lobbyName);
     }
 
     public void CreatedRandomSession()
@@ -50,12 +74,12 @@ public class FusionManager : MonoBehaviour, INetworkRunnerCallbacks
 
         runnerInstance.StartGame(new StartGameArgs()
         {
-            Scene = SceneRef.FromIndex(GetSceneIndex(lobbyGameSceneName)),
+            Scene = SceneRef.FromIndex(GetSceneIndex(GameScene)),
             SessionName = randomSessionName,
-            PlayerCount = 2,
             GameMode = GameMode.Host // O servidor (host) deve criar a sessão e instanciar o PlayerPrefab
         });
     }
+
 
     public void JoinSession(string sessionName)
     {
@@ -76,40 +100,37 @@ public class FusionManager : MonoBehaviour, INetworkRunnerCallbacks
         }
     }
 
+    // Método para abrir o canvas de seleção de personagens
+  
+
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
-        if (!runner.IsServer) return; // Garante que apenas o servidor realize a instância
+        // O host (servidor) deve instanciar o jogador
+        if (!runner.IsServer) return;
 
-        // Verifica se o jogador já foi instanciado para este player
+        // Verifica se o jogador já foi instanciado
         if (_spawnedCharacters.ContainsKey(player))
             return;
 
-        // Defina os limites da área onde você deseja que o jogador apareça
-        float minX = -5f;
-        float maxX = 5f;
-        float minZ = -5f;
-        float maxZ = 5f;
-
-        // Gera uma posição aleatória dentro dos limites especificados
-        float randomX = UnityEngine.Random.Range(minX, maxX);
-        float randomZ = UnityEngine.Random.Range(minZ, maxZ);
-        Vector3 spawnPosition = new Vector3(randomX, 1, randomZ);
-
-        // Instancia o objeto de rede do jogador com autoridade de input para o cliente específico
-        NetworkObject networkPlayerObject = runner.Spawn(_playerPrefab, spawnPosition, Quaternion.identity, player);
-
-        // Mantém o controle dos avatares dos jogadores para acesso fácil
-        _spawnedCharacters.Add(player, networkPlayerObject);
+        // Use o prefab do jogador selecionado (_playerPrefab) para instanciar o jogador
+        if (_playerPrefab != null)
+        {
+            Vector3 spawnPosition = new Vector3(0, 1, 0); // Defina a posição de spawn
+            NetworkObject networkPlayerObject = runner.Spawn(_playerPrefab, spawnPosition, Quaternion.identity, player);
+            _spawnedCharacters.Add(player, networkPlayerObject);
+        }
+        else
+        {
+            Debug.LogError("Nenhum personagem foi selecionado.");
+        }
+    }
+    public void OnStartGameButtonClicked()
+    {
+        LobbyCanvas.enabled = true;
+        characterSelectCanvas.GetComponent<Canvas>().enabled = false;
     }
 
-    /*
-    Metodo para atualizar  a posição frame a frame (não esta sendo utilizado)
-    private void UpdatePlayerPosition(NetworkObject networkPlayerObject, Vector3 position)
-    {
-        // Acessa o Transform do NetworkObject e atualiza a posição
-        Transform playerTransform = networkPlayerObject.transform;
-        playerTransform.position = position;
-    }*/
+
 
     public int GetSceneIndex(string sceneName)
     {
@@ -174,12 +195,12 @@ public class FusionManager : MonoBehaviour, INetworkRunnerCallbacks
             }
             else
             {
-                CrateEntryUi(session);
+                CreateEntryUi(session);
             }
         }
     }
 
-    private void CrateEntryUi(SessionInfo session)
+    private void CreateEntryUi(SessionInfo session)
     {
         GameObject newEntry = GameObject.Instantiate(sessionListEntryPrefab);
         newEntry.transform.parent = sessionListContentParent;
@@ -255,21 +276,14 @@ public class FusionManager : MonoBehaviour, INetworkRunnerCallbacks
         var data = new NetworkInputData();
 
         // Coleta de entrada para movimento em 2D
-        if (Input.GetKey(KeyCode.W))
-            data.direction += Vector2.up;
-
-        if (Input.GetKey(KeyCode.S))
-            data.direction += Vector2.down;
-
-        if (Input.GetKey(KeyCode.A))
-            data.direction += Vector2.left;
-
-        if (Input.GetKey(KeyCode.D))
-            data.direction += Vector2.right;
+        data.direction = Vector2.zero; // Inicia com um vetor nulo
+        if (Input.GetKey(KeyCode.W)) data.direction += Vector2.up;
+        if (Input.GetKey(KeyCode.S)) data.direction += Vector2.down;
+        if (Input.GetKey(KeyCode.A)) data.direction += Vector2.left;
+        if (Input.GetKey(KeyCode.D)) data.direction += Vector2.right;
 
         // Coleta de entrada para disparo
-        data.fire = Input.GetKey(KeyCode.Space);
-
+        data.fire = Input.GetKey(KeyCode.Space); // Use KeyDown para disparo
         input.Set(data);
     }
 
@@ -308,7 +322,7 @@ public class FusionManager : MonoBehaviour, INetworkRunnerCallbacks
         // Handle reliable data received if needed
     }
 
-    public void OnSceneLoadDone(NetworkRunner runner)
+   public void OnSceneLoadDone(NetworkRunner runner)
     {
         if (!runner.IsServer) return; // Apenas o servidor deve instanciar o jogador
 
@@ -318,6 +332,22 @@ public class FusionManager : MonoBehaviour, INetworkRunnerCallbacks
             Vector3 spawnPosition = new Vector3(0, 1, 0); // Define a posição de spawn necessária
             NetworkObject playerObject = runner.Spawn(_playerPrefab, spawnPosition, Quaternion.identity, runner.LocalPlayer);
             _spawnedCharacters.Add(runner.LocalPlayer, playerObject);
+        }
+
+    }
+    [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
+    public void RPCSelectCharacter(int characterIndex)
+    {
+        // Verifica se o índice está dentro dos limites da lista
+        if (characterIndex >= 0 && characterIndex < _availablePrefabs.Count)
+        {
+            // Associa o prefab selecionado ao _playerPrefab
+            _playerPrefab = _availablePrefabs[characterIndex];
+            Debug.Log($"Personagem {characterIndex} selecionado. Prefab associado: {_playerPrefab}");
+        }
+        else
+        {
+            Debug.LogError("Índice de personagem inválido!");
         }
     }
 
@@ -335,20 +365,15 @@ public class FusionManager : MonoBehaviour, INetworkRunnerCallbacks
     {
         // Handle user simulation messages if needed
     }
-
-  
-
     void Update()
     {
-      /*  if (sessionCreated)
+        if (sessionCreated)
         {
-            return; // Sai do método Update e não executa o restante do código
+            return; // Evita continuar executando se a sessão já foi criada
         }
 
         if (runnerInstance.IsCloudReady)
         {
-            
-
             // Ativa o GameObject "botaoCriacao" se estiver atribuído
             if (botaoCriacao != null)
             {
@@ -362,7 +387,7 @@ public class FusionManager : MonoBehaviour, INetworkRunnerCallbacks
         else
         {
             Debug.LogWarning("NetworkRunner não está pronto para a nuvem.");
-        }*/
+        }
     }
 
 }
